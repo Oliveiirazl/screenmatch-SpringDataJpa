@@ -3,11 +3,13 @@ package br.com.alura.screenmatch.model;
 import br.com.alura.screenmatch.service.TradutorLibre;
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.OptionalDouble;
 
 @Entity
-@Table(name = "series")
-    public class SerieModel {
+@Table(name = "serie")
+public class Serie {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,14 +27,27 @@ import java.util.OptionalDouble;
     private String poster;
     private String sinopse;
 
-    public SerieModel(DadosSerie dadosSerie){
+    private List<Episodio> episodios = new ArrayList<>();
+
+
+    public Serie() {}
+
+    public Serie(DadosSerie dadosSerie){
         this.titulo = dadosSerie.titulo();
         this.totalTemporadas = dadosSerie.totalTemporadas();
         this.avaliacao = OptionalDouble.of(Double.valueOf(dadosSerie.avaliacao())).orElse(0);
         this.genero = Categoria.fromString(dadosSerie.genero().split(",")[0].trim());
         this.atores = dadosSerie.atores();
         this.poster = dadosSerie.poster();
-        this.sinopse = TradutorLibre.obterTraducao(dadosSerie.sinopse().trim());
+        this.sinopse = TradutorLibre.obterTraducao(dadosSerie.sinopse()).trim();
+    }
+
+    public List<Episodio> getEpisodios() {
+        return episodios;
+    }
+
+    public void setEpisodios(List<Episodio> episodios) {
+        this.episodios = episodios;
     }
 
     public Long getId() {
@@ -101,12 +116,15 @@ import java.util.OptionalDouble;
 
     @Override
     public String toString() {
-        return  "genero = " + genero +
-                ", titulo = " + titulo + '\'' +
-                ", totalTemporadas = " + totalTemporadas +
-                ", avaliacao = " + avaliacao +
-                ", atores = " + atores + '\'' +
-                ", poster = " + poster + '\'' +
-                ", sinopse = " + sinopse + '\'' ;
+        return "Serie{" +
+                "id = " + id +
+                ", titulo='" + titulo + '\'' +
+                ", totalTemporadas=" + totalTemporadas +
+                ", avaliacao=" + avaliacao +
+                ", genero=" + genero +
+                ", atores='" + atores + '\'' +
+                ", poster='" + poster + '\'' +
+                ", sinopse='" + sinopse + '\'' +
+                '}';
     }
 }

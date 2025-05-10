@@ -1,31 +1,49 @@
 package br.com.alura.screenmatch.service;
 
-import com.theokanning.openai.service.OpenAiService;
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatMessage;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
-import java.util.List;
-
-public class ConsultaChatGPTService {
+public class TradutorLibre {
 
     public static String obterTraducao(String texto) {
         try {
-            OpenAiService service = new OpenAiService("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");
+            URL url = new URL("http://localhost:5000/translate");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-            ChatMessage systemMessage = new ChatMessage("system", "Você é um tradutor de inglês para português.");
-            ChatMessage userMessage = new ChatMessage("user", "Traduza o seguinte texto para o português: " + texto);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
 
-            ChatCompletionRequest requisicao = ChatCompletionRequest.builder()
-                    .model("gpt-3.5-turbo")
-                    .messages(List.of(systemMessage, userMessage))
-                    .maxTokens(1000)
-                    .temperature(0.7)
-                    .build();
+            String jsonInput = String.format(
+                    "{\"q\": \"%s\", \"source\": \"en\", \"target\": \"pt\", \"format\": \"text\"}",
+                    texto.replace("\"", "\\\"")
+            );
 
-            var resposta = service.createChatCompletion(requisicao);
-            return resposta.getChoices().get(0).getMessage().getContent();
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = jsonInput.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)
+            );
+
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+
+
+            String json = response.toString();
+            int start = json.indexOf(":\"") + 2;
+            int end = json.lastIndexOf("\"");
+            return json.substring(start, end);
+
         } catch (Exception e) {
-            System.out.println("Erro ao consultar ChatGPT: " + e.getMessage());
+            System.out.println("Erro ao traduzir: " + e.getMessage());
             return texto;
         }
     }
